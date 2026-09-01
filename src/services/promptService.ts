@@ -21,15 +21,18 @@ import { SchemaType, type Schema } from '@google/generative-ai';
 const cvSchema: Schema = {
   type: SchemaType.OBJECT,
   properties: {
-    fullName: { type: SchemaType.STRING },
-    headline: {
-      type: SchemaType.STRING,
-      description: 'Titular profesional breve, ej. "Desarrollador Senior | Especialista en X"',
+    keyRequirements: {
+      type: SchemaType.ARRAY,
+      description:
+        'Los 3-5 requisitos o palabras clave mas importantes identificados en la oferta, ' +
+        'antes de adaptar el CV. Este analisis debe hacerse primero y guiar el resto de campos.',
+      items: { type: SchemaType.STRING },
     },
-    summary: { type: SchemaType.STRING, description: 'Resumen profesional adaptado a la oferta' },
+    fullName: { type: SchemaType.STRING },
+    headline: { type: SchemaType.STRING },
+    summary: { type: SchemaType.STRING },
     skillGroups: {
       type: SchemaType.ARRAY,
-      description: 'Skills agrupadas por categoria (ej. Lenguajes, Herramientas, Metodologias)',
       items: {
         type: SchemaType.OBJECT,
         properties: {
@@ -47,11 +50,7 @@ const cvSchema: Schema = {
           role: { type: SchemaType.STRING },
           company: { type: SchemaType.STRING },
           period: { type: SchemaType.STRING },
-          bullets: {
-            type: SchemaType.ARRAY,
-            description: '3-4 logros o responsabilidades, cada uno conectado con la oferta',
-            items: { type: SchemaType.STRING },
-          },
+          bullets: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
         },
         required: ['role', 'company', 'period', 'bullets'],
       },
@@ -69,7 +68,7 @@ const cvSchema: Schema = {
       },
     },
   },
-  required: ['fullName', 'headline', 'summary', 'skillGroups', 'experience', 'education'],
+  required: ['keyRequirements', 'fullName', 'headline', 'summary', 'skillGroups', 'experience', 'education'],
 };
 export interface PromptResult {
   systemPrompt: string;
@@ -92,21 +91,26 @@ export function buildPrompt(
 function buildCvPrompt(profile: Profile, application: Application): PromptResult {
   const systemPrompt = `Eres un experto en redaccion de CVs adaptados a ofertas de trabajo.
 
-REGLAS:
-- Destaca la experiencia y skills mas relevantes para la oferta, no listes todo el perfil sin criterio.
-- Usa un tono profesional y directo, sin adjetivos vacios ("apasionado", "dinamico").
-- No inventes experiencia, skills ni titulos que no esten en el perfil del candidato.
-- Agrupa las skills en categorias con sentido (ej. "Lenguajes y Frameworks", "Herramientas", "Metodologias").
-- Para cada experiencia, escribe 3-4 bullets: logros o responsabilidades conectados con la oferta,
-  no una lista generica de tareas.
-- El headline debe reflejar el rol que se busca en la oferta, no solo repetir el ultimo puesto del candidato.
+    PROCESO A SEGUIR:
+    1. Primero, identifica en la oferta los 3-5 requisitos o palabras clave mas importantes
+      (tecnologias, responsabilidades, nivel de seniority). Este es el campo keyRequirements.
+    2. Despues, redacta el resto del CV usando esos requisitos como guia de que destacar y como.
 
-EJEMPLO:
-Perfil: 5 anos como desarrollador backend en Python/Django, experiencia con PostgreSQL.
-Oferta: Backend developer con Node.js y TypeScript.
-Un bullet de ejemplo para esa experiencia: "Diseñe e implemente APIs REST con Django, aplicando
-patrones directamente transferibles a un stack Node.js/TypeScript (modelado de datos, autenticacion,
-arquitectura en capas)."`;
+    REGLAS:
+    - Destaca la experiencia y skills mas relevantes para la oferta, no listes todo el perfil sin criterio.
+    - Usa un tono profesional y directo, sin adjetivos vacios ("apasionado", "dinamico").
+    - No inventes experiencia, skills ni titulos que no esten en el perfil del candidato.
+    - Agrupa las skills en categorias con sentido (ej. "Lenguajes y Frameworks", "Herramientas", "Metodologias").
+    - Para cada experiencia, escribe 3-4 bullets conectados especificamente con los keyRequirements identificados.
+    - El headline debe reflejar el rol que se busca en la oferta, no solo repetir el ultimo puesto del candidato.
+
+    EJEMPLO:
+    Perfil: 5 anos como desarrollador backend en Python/Django, experiencia con PostgreSQL.
+    Oferta: Backend developer con Node.js y TypeScript.
+    keyRequirements de ejemplo: ["Node.js", "TypeScript", "diseño de APIs REST", "bases de datos relacionales"]
+    Un bullet de ejemplo, ya conectado con esos requirements: "Diseñe e implemente APIs REST con Django,
+    aplicando patrones directamente transferibles a Node.js/TypeScript (modelado de datos, autenticacion,
+    arquitectura en capas)."`;
 
   const userPrompt = `PERFIL DEL CANDIDATO:
 Nombre: ${profile.fullName}
@@ -132,10 +136,15 @@ Genera el CV adaptado a esta oferta.`;
 function buildCoverLetterPrompt(profile: Profile, application: Application): PromptResult {
   const systemPrompt = `Eres un experto en redaccion de cartas de presentacion.
 
-REGLAS:
-- 3-4 parrafos, tono profesional pero cercano.
-- Conecta explicitamente el perfil del candidato con los requisitos de la oferta.
-- No inventes datos que no esten en el perfil del candidato.`;
+    PROCESO A SEGUIR:
+    1. Antes de escribir, identifica mentalmente 2-3 puntos de conexion concretos entre el perfil
+      del candidato y los requisitos de la oferta.
+    2. Usa esos puntos de conexion como columna vertebral de los parrafos centrales de la carta.
+
+    REGLAS:
+    - 3-4 parrafos, tono profesional pero cercano.
+    - Cada parrafo central debe desarrollar uno de esos puntos de conexion, no ser generico.
+    - No inventes datos que no esten en el perfil del candidato.`;
 
   const userPrompt = `PERFIL DEL CANDIDATO:
 Nombre: ${profile.fullName}

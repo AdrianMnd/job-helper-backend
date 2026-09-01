@@ -34,6 +34,7 @@ const generateSchema = z.object({
 // de error, no una garantia absoluta, asi que Zod actua de red de seguridad
 // final antes de guardar el dato o devolverlo al frontend.
 const cvContentSchema = z.object({
+  keyRequirements: z.array(z.string()),
   fullName: z.string(),
   headline: z.string(),
   summary: z.string(),
