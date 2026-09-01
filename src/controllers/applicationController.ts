@@ -29,6 +29,37 @@ const generateSchema = z.object({
   docType: z.enum(['CV', 'COVER_LETTER']),
 });
 
+// Valida la forma del JSON que Gemini devuelve para el CV. No confiamos
+// ciegamente en que responseSchema baste: es una reduccion de probabilidad
+// de error, no una garantia absoluta, asi que Zod actua de red de seguridad
+// final antes de guardar el dato o devolverlo al frontend.
+const cvContentSchema = z.object({
+  fullName: z.string(),
+  headline: z.string(),
+  summary: z.string(),
+  skillGroups: z.array(
+    z.object({
+      category: z.string(),
+      skills: z.array(z.string()),
+    })
+  ),
+  experience: z.array(
+    z.object({
+      role: z.string(),
+      company: z.string(),
+      period: z.string(),
+      bullets: z.array(z.string()),
+    })
+  ),
+  education: z.array(
+    z.object({
+      degree: z.string(),
+      institution: z.string(),
+      period: z.string(),
+    })
+  ),
+});
+
 export async function listApplications(req: Request, res: Response) {
   const applications = await listApplicationsByUser(req.user!.userId);
   return res.json(applications);
@@ -65,9 +96,8 @@ export async function deleteApplication(req: Request, res: Response) {
   return res.status(204).send();
 }
 
-// Ruta "cara": dispara una llamada real a Gemini. Por eso conviene que el
-// frontend pida confirmacion antes de invocarla, igual que las acciones
-// irreversibles en Task Agent.
+// Ruta "cara": dispara una llamada real a Gemini. Por eso el frontend pide
+// confirmacion antes de invocarla.
 export async function generateDocument(req: Request, res: Response) {
   const parsed = generateSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -84,7 +114,16 @@ export async function generateDocument(req: Request, res: Response) {
   }
 
   const { systemPrompt, userPrompt, modelParams } = buildPrompt(docType, profile, application);
-  const content = await generateContent(systemPrompt, userPrompt, modelParams);
+  const rawContent = await generateContent(systemPrompt, userPrompt, modelParams);
+
+  let content = rawContent;
+  if (docType === 'CV') {
+    const parsedCv = cvContentSchema.safeParse(JSON.parse(rawContent));
+    if (!parsedCv.success) {
+      throw new Error('Gemini devolvio un CV con formato invalido');
+    }
+    content = JSON.stringify(parsedCv.data);
+  }
 
   const lastVersion = await prisma.generatedDocument.findFirst({
     where: { applicationId: application.id, docType },
@@ -92,15 +131,15 @@ export async function generateDocument(req: Request, res: Response) {
   });
 
   const document = await prisma.generatedDocument.create({
-    data: {
-      applicationId: application.id,
-      docType,
-      version: (lastVersion?.version ?? 0) + 1,
-      content,
-      promptUsed: `SYSTEM:\n${systemPrompt}\n\nUSER:\n${userPrompt}`,
-      modelParams,
-    },
-  });
+  data: {
+    applicationId: application.id,
+    docType,
+    version: (lastVersion?.version ?? 0) + 1,
+    content,
+    promptUsed: `SYSTEM:\n${systemPrompt}\n\nUSER:\n${userPrompt}`,
+    modelParams: { temperature: modelParams.temperature, topP: modelParams.topP },
+  },
+});
 
   return res.status(201).json(document);
 }

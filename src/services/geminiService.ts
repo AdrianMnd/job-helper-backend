@@ -1,18 +1,12 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-ai';
 import { env } from '../config/env';
-
-// Capa "cruda" de comunicacion con la API de Gemini. No sabe nada de CVs,
-// candidaturas ni dominio de negocio: solo recibe texto + parametros y
-// devuelve texto. Esta separacion respecto a promptService es la que permite
-// testear promptService (construccion de prompts) sin hacer llamadas reales
-// a la API, y viceversa.
 
 const client = new GoogleGenerativeAI(env.geminiApiKey);
 
 export async function generateContent(
   systemPrompt: string,
   userPrompt: string,
-  params: { temperature: number; topP: number }
+  params: { temperature: number; topP: number; responseSchema?: Schema }
 ): Promise<string> {
   const model = client.getGenerativeModel({
     model: env.geminiModel,
@@ -20,9 +14,14 @@ export async function generateContent(
     generationConfig: {
       temperature: params.temperature,
       topP: params.topP,
+      ...(params.responseSchema
+        ? { responseMimeType: 'application/json', responseSchema: params.responseSchema }
+        : {}),
     },
   });
 
   const result = await model.generateContent(userPrompt);
   return result.response.text();
 }
+
+export { SchemaType };
