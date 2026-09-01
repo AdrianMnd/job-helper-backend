@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
-import { asyncHandler } from '../lib/asynchandler';
+import { asyncHandler } from '../lib/asyncHandler';
 import {
   listApplications,
   createApplication,
