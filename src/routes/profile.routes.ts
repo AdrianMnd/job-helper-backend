@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { getProfile, updateProfile } from '../controllers/profileController';
-import { asyncHandler } from '../lib/asynchandler';
+import { asyncHandler } from '../lib/asyncHandler';
 
 export const profileRouter = Router();
 
