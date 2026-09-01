@@ -83,8 +83,8 @@ export async function generateDocument(req: Request, res: Response) {
     return res.status(400).json({ error: 'Completa tu perfil antes de generar documentos' });
   }
 
-  const { prompt, modelParams } = buildPrompt(docType, profile, application);
-  const content = await generateContent(prompt, modelParams);
+  const { systemPrompt, userPrompt, modelParams } = buildPrompt(docType, profile, application);
+  const content = await generateContent(systemPrompt, userPrompt, modelParams);
 
   const lastVersion = await prisma.generatedDocument.findFirst({
     where: { applicationId: application.id, docType },
@@ -97,7 +97,7 @@ export async function generateDocument(req: Request, res: Response) {
       docType,
       version: (lastVersion?.version ?? 0) + 1,
       content,
-      promptUsed: prompt,
+      promptUsed: `SYSTEM:\n${systemPrompt}\n\nUSER:\n${userPrompt}`,
       modelParams,
     },
   });

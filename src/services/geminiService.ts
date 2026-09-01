@@ -10,17 +10,19 @@ import { env } from '../config/env';
 const client = new GoogleGenerativeAI(env.geminiApiKey);
 
 export async function generateContent(
-  prompt: string,
+  systemPrompt: string,
+  userPrompt: string,
   params: { temperature: number; topP: number }
 ): Promise<string> {
   const model = client.getGenerativeModel({
     model: env.geminiModel,
+    systemInstruction: systemPrompt,
     generationConfig: {
       temperature: params.temperature,
       topP: params.topP,
     },
   });
 
-  const result = await model.generateContent(prompt);
+  const result = await model.generateContent(userPrompt);
   return result.response.text();
 }
