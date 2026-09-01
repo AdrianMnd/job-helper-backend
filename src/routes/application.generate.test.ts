@@ -30,6 +30,18 @@ const profile = {
   skills: [],
 };
 
+// backend/src/routes/application.generate.test.ts
+
+const mockCvContent = {
+  keyRequirements: ['TypeScript', 'Node.js'],
+  fullName: 'Ada',
+  headline: 'Backend Developer',
+  summary: 'Resumen de prueba',
+  skillGroups: [{ category: 'Lenguajes', skills: ['TypeScript'] }],
+  experience: [],
+  education: [],
+};
+
 describe('POST /applications/:id/generate', () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -38,7 +50,7 @@ describe('POST /applications/:id/generate', () => {
     (prisma.profile.findUnique as any).mockResolvedValue(profile);
     (prisma.generatedDocument.findFirst as any).mockResolvedValue(null);
     (prisma.generatedDocument.create as any).mockResolvedValue({ id: 'd1', version: 1 });
-    (generateContent as any).mockResolvedValue('CV generado');
+    (generateContent as any).mockResolvedValue(JSON.stringify(mockCvContent));
 
     const res = await request(app)
       .post('/applications/app1/generate')

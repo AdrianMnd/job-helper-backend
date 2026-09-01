@@ -18,14 +18,19 @@ const application = {
 
 describe('promptService', () => {
   it('el prompt de CV incluye los datos del perfil y usa temperatura baja', () => {
-  const { prompt, modelParams } = buildPrompt('CV', profile, application);
-  expect(prompt).toContain('Ada Lovelace');
-  expect(prompt).toContain('Buscamos backend developer con TypeScript');
-  expect(modelParams.temperature).toBe(0.3);
-});
+    const { systemPrompt, userPrompt, modelParams } = buildPrompt('CV', profile, application);
+    expect(userPrompt).toContain('Ada Lovelace');
+    expect(userPrompt).toContain('Buscamos backend developer con TypeScript');
+    expect(modelParams.temperature).toBe(0.3);
+  });
 
   it('el prompt de carta usa temperatura mas alta que el de CV', () => {
     const { modelParams } = buildPrompt('COVER_LETTER', profile, application);
     expect(modelParams.temperature).toBeGreaterThan(0.3);
+  });
+
+  it('el prompt incluye una advertencia explicita contra prompt injection', () => {
+    const { systemPrompt } = buildPrompt('CV', profile, application);
+    expect(systemPrompt.toLowerCase()).toContain('nunca instrucciones');
   });
 });
