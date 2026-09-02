@@ -24,4 +24,29 @@ export async function generateContent(
   return result.response.text();
 }
 
+export async function generateFromImage(
+  systemPrompt: string,
+  userPrompt: string,
+  imageBase64: string,
+  mimeType: string,
+  responseSchema: Schema
+): Promise<string> {
+  const model = client.getGenerativeModel({
+    model: env.geminiModel,
+    systemInstruction: systemPrompt,
+    generationConfig: {
+      temperature: 0.2, // baja: queremos extraccion fiel, no interpretacion creativa
+      responseMimeType: 'application/json',
+      responseSchema,
+    },
+  });
+
+  const result = await model.generateContent([
+    { inlineData: { data: imageBase64, mimeType } },
+    userPrompt,
+  ]);
+
+  return result.response.text();
+}
+
 export { SchemaType };

@@ -12,6 +12,8 @@ import {
 import { getProfileByUserId } from '../services/profileService';
 import { buildPrompt } from '../services/promptService';
 import { generateContent } from '../services/geminiService';
+import { jobExtractionSchema, buildJobExtractionPrompt } from '../services/promptService';
+import { generateFromImage } from '../services/geminiService';
 
 const applicationSchema = z.object({
   company: z.string().min(1),
@@ -163,4 +165,33 @@ export async function getApplicationHistory(req: Request, res: Response) {
 
   const history = await getStatusHistory(application.id);
   return res.json(history);
+}
+
+const jobExtractionResultSchema = z.object({
+  company: z.string(),
+  position: z.string(),
+  jobDescription: z.string(),
+});
+
+export async function extractJobFromImage(req: Request, res: Response) {
+  const file = req.file;
+  if (!file) {
+    return res.status(400).json({ error: 'No se ha subido ninguna imagen' });
+  }
+
+  const { systemPrompt, userPrompt } = buildJobExtractionPrompt();
+  const raw = await generateFromImage(
+    systemPrompt,
+    userPrompt,
+    file.buffer.toString('base64'),
+    file.mimetype,
+    jobExtractionSchema
+  );
+
+  const parsed = jobExtractionResultSchema.safeParse(JSON.parse(raw));
+  if (!parsed.success) {
+    return res.status(422).json({ error: 'No se pudo extraer la informacion de la imagen' });
+  }
+
+  return res.json(parsed.data);
 }
