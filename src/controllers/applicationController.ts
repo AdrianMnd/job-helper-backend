@@ -12,6 +12,10 @@ import {
 import { getProfileByUserId } from '../services/profileService';
 import { buildPrompt } from '../services/promptService';
 import { generateContent } from '../services/geminiService';
+import { jobExtractionSchema, buildJobExtractionPrompt } from '../services/promptService';
+import { generateFromImage } from '../services/geminiService';
+import { buildJobExtractionFromTextPrompt } from '../services/promptService';
+
 
 const applicationSchema = z.object({
   company: z.string().min(1),
@@ -163,4 +167,60 @@ export async function getApplicationHistory(req: Request, res: Response) {
 
   const history = await getStatusHistory(application.id);
   return res.json(history);
+}
+
+const jobExtractionResultSchema = z.object({
+  company: z.string(),
+  position: z.string(),
+  jobDescription: z.string(),
+});
+
+export async function extractJobFromImage(req: Request, res: Response) {
+  const file = req.file;
+  if (!file) {
+    return res.status(400).json({ error: 'No se ha subido ninguna imagen' });
+  }
+
+  const { systemPrompt, userPrompt } = buildJobExtractionPrompt();
+  const raw = await generateFromImage(
+    systemPrompt,
+    userPrompt,
+    file.buffer.toString('base64'),
+    file.mimetype,
+    jobExtractionSchema
+  );
+
+  const parsed = jobExtractionResultSchema.safeParse(JSON.parse(raw));
+  if (!parsed.success) {
+    return res.status(422).json({ error: 'No se pudo extraer la informacion de la imagen' });
+  }
+
+  return res.json(parsed.data);
+}
+
+const extractTextSchema = z.object({
+  text: z.string().min(1).max(15000),
+});
+
+export async function extractJobFromText(req: Request, res: Response) {
+  const parsed = extractTextSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+
+  const { systemPrompt, userPrompt } = buildJobExtractionFromTextPrompt();
+  const fullUserPrompt = `${userPrompt}\n\nTEXTO DE LA PAGINA:\n"""\n${parsed.data.text}\n"""`;
+
+  const raw = await generateContent(systemPrompt, fullUserPrompt, {
+    temperature: 0.2,
+    topP: 0.9,
+    responseSchema: jobExtractionSchema,
+  });
+
+  const parsedResult = jobExtractionResultSchema.safeParse(JSON.parse(raw));
+  if (!parsedResult.success) {
+    return res.status(422).json({ error: 'No se pudo extraer la informacion del texto' });
+  }
+
+  return res.json(parsedResult.data);
 }
