@@ -73,3 +73,10 @@ export async function deleteApplication(userId: string, id: string) {
   await prisma.application.delete({ where: { id } });
   return true;
 }
+
+export function getStatusHistory(applicationId: string) {
+  return prisma.statusHistory.findMany({
+    where: { applicationId },
+    orderBy: { changedAt: 'asc' },
+  });
+}

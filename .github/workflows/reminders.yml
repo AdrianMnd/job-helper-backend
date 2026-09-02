@@ -1,0 +1,17 @@
+name: Enviar recordatorios de candidaturas
+
+on:
+  schedule:
+    # Todos los dias a las 8:00 UTC. Sintaxis cron estandar: minuto hora * * *
+    - cron: '0 8 * * *'
+  workflow_dispatch: {} # permite lanzarlo manualmente desde la pestaña Actions, util para probar
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Llamar al endpoint de recordatorios
+        run: |
+          curl -X POST "${{ secrets.BACKEND_URL }}/cron/reminders" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -f

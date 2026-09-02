@@ -7,6 +7,7 @@ import {
   getApplicationForUser,
   updateApplication as updateApplicationService,
   deleteApplication as deleteApplicationService,
+  getStatusHistory
 } from '../services/applicationService';
 import { getProfileByUserId } from '../services/profileService';
 import { buildPrompt } from '../services/promptService';
@@ -154,4 +155,12 @@ export async function listDocuments(req: Request, res: Response) {
     orderBy: [{ docType: 'asc' }, { version: 'desc' }],
   });
   return res.json(documents);
+}
+
+export async function getApplicationHistory(req: Request, res: Response) {
+  const application = await getApplicationForUser(req.user!.userId, req.params.id);
+  if (!application) return res.status(404).json({ error: 'Candidatura no encontrada' });
+
+  const history = await getStatusHistory(application.id);
+  return res.json(history);
 }

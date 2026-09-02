@@ -9,6 +9,7 @@ import {
   deleteApplication,
   generateDocument,
   listDocuments,
+  getApplicationHistory
 } from '../controllers/applicationController';
 
 export const applicationRouter = Router();
@@ -21,3 +22,4 @@ applicationRouter.patch('/:id', asyncHandler(updateApplication));
 applicationRouter.delete('/:id', asyncHandler(deleteApplication));
 applicationRouter.post('/:id/generate', asyncHandler(generateDocument));
 applicationRouter.get('/:id/documents', asyncHandler(listDocuments));
+applicationRouter.get('/:id/history', asyncHandler(getApplicationHistory));
