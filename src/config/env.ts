@@ -16,4 +16,7 @@ export const env = {
   jwtExpiresIn: (process.env.JWT_EXPIRES_IN ?? '7d') as SignOptions['expiresIn'],
   geminiApiKey: required('GEMINI_API_KEY'),
   geminiModel: process.env.GEMINI_MODEL ?? 'gemini-3.6-flash',
+  resendApiKey: required('RESEND_API_KEY'),
+  reminderDaysThreshold: Number(process.env.REMINDER_DAYS_THRESHOLD ?? 7),
+  cronSecret: required('CRON_SECRET'),
 };
