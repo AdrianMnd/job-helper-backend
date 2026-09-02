@@ -10,7 +10,8 @@ import {
   generateDocument,
   listDocuments,
   getApplicationHistory,
-  extractJobFromImage
+  extractJobFromImage,
+  extractJobFromText
 } from '../controllers/applicationController';
 import multer from 'multer';
 
@@ -31,6 +32,7 @@ applicationRouter.post(
   upload.single('image'),
   asyncHandler(extractJobFromImage)
 );
+applicationRouter.post('/extract-from-text', asyncHandler(extractJobFromText));
 applicationRouter.get('/:id', asyncHandler(getApplication));
 applicationRouter.patch('/:id', asyncHandler(updateApplication));
 applicationRouter.delete('/:id', asyncHandler(deleteApplication));
