@@ -23,6 +23,7 @@ import {
   parseCvContent,
   sanitizeFilename,
 } from '../services/exportService';
+import { getProcessMetrics } from '../services/metricsService';
 
 
 const applicationSchema = z.object({
@@ -274,4 +275,9 @@ export async function exportDocument(req: Request, res: Response) {
   res.setHeader('Content-Type', contentType);
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   return res.send(buffer);
+}
+
+export async function getMetrics(req: Request, res: Response) {
+  const metrics = await getProcessMetrics(req.user!.userId);
+  return res.json(metrics);
 }

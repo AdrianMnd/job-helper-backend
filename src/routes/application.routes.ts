@@ -15,6 +15,7 @@ import {
   exportDocument 
 } from '../controllers/applicationController';
 import multer from 'multer';
+import { getMetrics } from '../controllers/applicationController';
 
 export const applicationRouter = Router();
 
@@ -33,6 +34,7 @@ applicationRouter.post(
   upload.single('image'),
   asyncHandler(extractJobFromImage)
 );
+applicationRouter.get('/metrics/summary', asyncHandler(getMetrics));
 applicationRouter.post('/extract-from-text', asyncHandler(extractJobFromText));
 applicationRouter.get('/:id', asyncHandler(getApplication));
 applicationRouter.patch('/:id', asyncHandler(updateApplication));
