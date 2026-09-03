@@ -11,7 +11,8 @@ import {
   listDocuments,
   getApplicationHistory,
   extractJobFromImage,
-  extractJobFromText
+  extractJobFromText,
+  exportDocument 
 } from '../controllers/applicationController';
 import multer from 'multer';
 
@@ -39,3 +40,4 @@ applicationRouter.delete('/:id', asyncHandler(deleteApplication));
 applicationRouter.post('/:id/generate', asyncHandler(generateDocument));
 applicationRouter.get('/:id/documents', asyncHandler(listDocuments));
 applicationRouter.get('/:id/history', asyncHandler(getApplicationHistory));
+applicationRouter.get('/:id/documents/:documentId/export', asyncHandler(exportDocument));
