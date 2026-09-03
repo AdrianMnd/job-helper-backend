@@ -14,7 +14,7 @@ export const prisma: any = {
     delete: vi.fn(),
   },
   generatedDocument: { findFirst: vi.fn(), create: vi.fn(), findMany: vi.fn() },
-  statusHistory: { create: vi.fn() },
+  statusHistory: { create: vi.fn(), findMany: vi.fn() },
 };
 
 prisma.$transaction = vi.fn(async (fn: any) => fn(prisma));

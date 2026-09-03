@@ -11,9 +11,11 @@ import {
   listDocuments,
   getApplicationHistory,
   extractJobFromImage,
-  extractJobFromText
+  extractJobFromText,
+  exportDocument 
 } from '../controllers/applicationController';
 import multer from 'multer';
+import { getMetrics } from '../controllers/applicationController';
 
 export const applicationRouter = Router();
 
@@ -32,6 +34,7 @@ applicationRouter.post(
   upload.single('image'),
   asyncHandler(extractJobFromImage)
 );
+applicationRouter.get('/metrics/summary', asyncHandler(getMetrics));
 applicationRouter.post('/extract-from-text', asyncHandler(extractJobFromText));
 applicationRouter.get('/:id', asyncHandler(getApplication));
 applicationRouter.patch('/:id', asyncHandler(updateApplication));
@@ -39,3 +42,4 @@ applicationRouter.delete('/:id', asyncHandler(deleteApplication));
 applicationRouter.post('/:id/generate', asyncHandler(generateDocument));
 applicationRouter.get('/:id/documents', asyncHandler(listDocuments));
 applicationRouter.get('/:id/history', asyncHandler(getApplicationHistory));
+applicationRouter.get('/:id/documents/:documentId/export', asyncHandler(exportDocument));

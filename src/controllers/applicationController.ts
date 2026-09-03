@@ -15,6 +15,15 @@ import { generateContent } from '../services/geminiService';
 import { jobExtractionSchema, buildJobExtractionPrompt } from '../services/promptService';
 import { generateFromImage } from '../services/geminiService';
 import { buildJobExtractionFromTextPrompt } from '../services/promptService';
+import {
+  generateCvDocx,
+  generateCvPdf,
+  generateCoverLetterDocx,
+  generateCoverLetterPdf,
+  parseCvContent,
+  sanitizeFilename,
+} from '../services/exportService';
+import { getProcessMetrics } from '../services/metricsService';
 
 
 const applicationSchema = z.object({
@@ -223,4 +232,52 @@ export async function extractJobFromText(req: Request, res: Response) {
   }
 
   return res.json(parsedResult.data);
+}
+
+const exportQuerySchema = z.object({
+  format: z.enum(['docx', 'pdf']),
+});
+
+export async function exportDocument(req: Request, res: Response) {
+  const parsedQuery = exportQuerySchema.safeParse(req.query);
+  if (!parsedQuery.success) {
+    return res.status(400).json({ error: 'Usa ?format=docx o ?format=pdf' });
+  }
+  const { format } = parsedQuery.data;
+
+  const application = await getApplicationForUser(req.user!.userId, req.params.id);
+  if (!application) return res.status(404).json({ error: 'Candidatura no encontrada' });
+
+  const document = await prisma.generatedDocument.findFirst({
+    where: { id: req.params.documentId, applicationId: application.id },
+  });
+  if (!document) return res.status(404).json({ error: 'Documento no encontrado' });
+
+  let buffer: Buffer;
+  const label = document.docType === 'CV' ? 'CV' : 'Carta';
+
+  if (document.docType === 'CV') {
+    const cv = parseCvContent(document.content);
+    buffer = format === 'docx' ? await generateCvDocx(cv) : await generateCvPdf(cv);
+  } else {
+    buffer =
+      format === 'docx'
+        ? await generateCoverLetterDocx(document.content)
+        : await generateCoverLetterPdf(document.content);
+  }
+
+  const filename = sanitizeFilename(`${label}_${application.company}_v${document.version}.${format}`);
+  const contentType =
+    format === 'docx'
+      ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      : 'application/pdf';
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  return res.send(buffer);
+}
+
+export async function getMetrics(req: Request, res: Response) {
+  const metrics = await getProcessMetrics(req.user!.userId);
+  return res.json(metrics);
 }
