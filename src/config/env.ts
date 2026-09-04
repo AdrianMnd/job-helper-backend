@@ -19,4 +19,6 @@ export const env = {
   resendApiKey: required('RESEND_API_KEY'),
   reminderDaysThreshold: Number(process.env.REMINDER_DAYS_THRESHOLD ?? 7),
   cronSecret: required('CRON_SECRET'),
+  adzunaAppId: required('ADZUNA_APP_ID'),
+  adzunaAppKey: required('ADZUNA_APP_KEY'),
 };
