@@ -6,6 +6,7 @@ import { profileRouter } from './routes/profile.routes';
 import { applicationRouter } from './routes/application.routes';
 import { errorHandler } from './middleware/errorHandler';
 import { cronRouter } from './routes/cron.routes';
+import { jobSearchRouter } from './routes/jobSearch.routes';
 
 // Separado de index.ts para poder importar la app en tests (via Supertest)
 // sin necesidad de levantar un puerto real con app.listen().
@@ -20,6 +21,7 @@ export function createApp() {
   app.use('/profile', profileRouter);
   app.use('/applications', applicationRouter);
   app.use('/cron', cronRouter);
+  app.use('/jobs', jobSearchRouter);
   app.use(errorHandler);
 
   return app;

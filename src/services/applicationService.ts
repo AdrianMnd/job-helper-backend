@@ -13,22 +13,33 @@ export function getApplicationForUser(userId: string, id: string) {
   return prisma.application.findFirst({ where: { id, userId } });
 }
 
+export class DuplicateApplicationError extends Error {
+  constructor(public existingApplicationId: string) {
+    super('Ya tienes una candidatura creada con esta URL');
+    this.name = 'DuplicateApplicationError';
+  }
+}
+
 export function createApplication(userId: string, input: ApplicationInput) {
-  return prisma.application.create({
-    data: {
-      userId,
-      company: input.company,
-      position: input.position,
-      jobDescription: input.jobDescription,
-      jobUrl: input.jobUrl,
-      notes: input.notes,
-      appliedDate: input.appliedDate ? new Date(input.appliedDate) : undefined,
-      // La fila inicial de status_history se crea junto a la candidatura,
-      // asi el historial siempre empieza completo desde el primer estado.
-      statusHistory: {
-        create: { status: 'APPLIED' },
+  return prisma.application.findFirst({
+    where: { userId, jobUrl: input.jobUrl },
+    select: { id: true },
+  }).then((existing) => {
+    if (input.jobUrl && existing) {
+      throw new DuplicateApplicationError(existing.id);
+    }
+    return prisma.application.create({
+      data: {
+        userId,
+        company: input.company,
+        position: input.position,
+        jobDescription: input.jobDescription,
+        jobUrl: input.jobUrl,
+        notes: input.notes,
+        appliedDate: input.appliedDate ? new Date(input.appliedDate) : undefined,
+        statusHistory: { create: { status: 'APPLIED' } },
       },
-    },
+    });
   });
 }
 
