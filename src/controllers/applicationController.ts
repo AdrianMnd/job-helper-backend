@@ -7,7 +7,8 @@ import {
   getApplicationForUser,
   updateApplication as updateApplicationService,
   deleteApplication as deleteApplicationService,
-  getStatusHistory
+  getStatusHistory,
+  DuplicateApplicationError
 } from '../services/applicationService';
 import { getProfileByUserId } from '../services/profileService';
 import { buildPrompt } from '../services/promptService';
@@ -24,7 +25,6 @@ import {
   sanitizeFilename,
 } from '../services/exportService';
 import { getProcessMetrics } from '../services/metricsService';
-
 
 const applicationSchema = z.object({
   company: z.string().min(1),
@@ -85,8 +85,16 @@ export async function createApplication(req: Request, res: Response) {
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
-  const application = await createApplicationService(req.user!.userId, parsed.data);
-  return res.status(201).json(application);
+
+  try {
+    const application = await createApplicationService(req.user!.userId, parsed.data);
+    return res.status(201).json(application);
+  } catch (err) {
+    if (err instanceof DuplicateApplicationError) {
+      return res.status(409).json({ error: err.message, applicationId: err.existingApplicationId });
+    }
+    throw err; // cualquier otro error real sigue su curso normal (500 via asyncHandler)
+  }
 }
 
 export async function getApplication(req: Request, res: Response) {
