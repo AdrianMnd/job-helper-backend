@@ -37,7 +37,7 @@ export function createApplication(userId: string, input: ApplicationInput) {
         jobUrl: input.jobUrl,
         notes: input.notes,
         appliedDate: input.appliedDate ? new Date(input.appliedDate) : undefined,
-        statusHistory: { create: { status: 'APPLIED' } },
+        statusHistory: { create: { status: 'SAVED' } },
       },
     });
   });

@@ -22,7 +22,7 @@ describe('applicationService', () => {
           data: expect.objectContaining({
             userId: 'user1',
             company: 'Acme',
-            statusHistory: { create: { status: 'APPLIED' } },
+            statusHistory: { create: { status: 'SAVED' } },
           }),
         })
       );

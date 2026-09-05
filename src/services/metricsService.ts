@@ -18,7 +18,7 @@ export interface ProcessMetrics {
   averageDaysInStage: StageDuration[];
 }
 
-const FUNNEL_ORDER: ApplicationStatus[] = ['APPLIED', 'INTERVIEW', 'OFFER'];
+const FUNNEL_ORDER: ApplicationStatus[] = ['SAVED', 'APPLIED', 'INTERVIEW', 'OFFER'];
 
 export async function getProcessMetrics(userId: string): Promise<ProcessMetrics> {
   const applications = await prisma.application.findMany({

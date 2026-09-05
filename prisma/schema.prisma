@@ -41,6 +41,7 @@ model Profile {
 }
 
 enum ApplicationStatus {
+  SAVED
   APPLIED
   INTERVIEW
   OFFER
@@ -55,7 +56,7 @@ model Application {
   position        String
   jobDescription  String            @map("job_description")
   jobUrl          String?           @map("job_url")
-  status          ApplicationStatus @default(APPLIED)
+  status          ApplicationStatus @default(SAVED)
   appliedDate     DateTime?         @map("applied_date")
   notes           String?
   createdAt       DateTime          @default(now()) @map("created_at")

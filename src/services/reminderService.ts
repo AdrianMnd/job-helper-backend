@@ -3,7 +3,7 @@ import { env } from '../config/env';
 import { sendReminderEmail } from './emailService';
 import type { ApplicationStatus } from '@prisma/client';
 
-const ACTIVE_STATUSES: ApplicationStatus[] = ['APPLIED', 'INTERVIEW'];
+const ACTIVE_STATUSES: ApplicationStatus[] = ['SAVED', 'APPLIED', 'INTERVIEW'];
 
 export async function sendStaleApplicationReminders() {
   const thresholdDate = new Date();
