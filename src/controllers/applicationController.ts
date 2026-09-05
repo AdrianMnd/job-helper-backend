@@ -36,7 +36,7 @@ const applicationSchema = z.object({
 });
 
 const updateSchema = applicationSchema.partial().extend({
-  status: z.enum(['APPLIED', 'INTERVIEW', 'OFFER', 'REJECTED', 'WITHDRAWN']).optional(),
+  status: z.enum(['SAVED', 'APPLIED', 'INTERVIEW', 'OFFER', 'REJECTED', 'WITHDRAWN']).optional(),
 });
 
 const generateSchema = z.object({

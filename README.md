@@ -44,9 +44,9 @@ src/
 - **CRUD de candidaturas** con historial de estado transaccional (`StatusHistory`): cada cambio de estado escribe una fila de auditoría en la misma transacción que la actualización.
 - **Generación de CV/carta con Gemini**, con seis técnicas de prompt engineering aplicadas: separación system/user prompt, few-shot, structured output (JSON Schema validado también con Zod como red de seguridad), chain-of-thought (campo `keyRequirements` como primer campo del schema), ajuste de `temperature`/`top_p` por tipo de documento, y defensas explícitas contra prompt injection en el contenido externo de la oferta.
 - **Extracción de ofertas** desde texto plano (extensión de navegador) o desde imagen/PDF (Gemini Vision).
-- **Buscador de ofertas** integrado con la API de Adzuna (mercado España), con traducción automática del término de búsqueda al español vía Gemini cuando el usuario busca en otro idioma (Adzuna España indexa mayoritariamente en español). Cacheado en memoria de corta duración para no agotar el límite diario del tier gratuito. Prevención de candidaturas duplicadas: al crear una candidatura con una `jobUrl` que ya existe para ese usuario, el backend responde `409` en vez de duplicarla — se aplica a cualquier vía de creación (búsqueda, extensión, o manual), no solo al buscador.
 - **Exportación** de CV/carta a `.docx` y `.pdf` bajo demanda.
-- **Métricas del proceso**: embudo de conversión y tiempo medio por fase, calculados a partir de `StatusHistory`.
+- **Métricas del proceso**: embudo de conversión (Guardada → Aplicado → Entrevista → Oferta) y tiempo medio por fase, calculados a partir de `StatusHistory`.
+- **Estado inicial "Guardada"**: toda candidatura nace en este estado (no "Aplicado"), reflejando que crear el registro y enviar la solicitud real en la web del ofertante son dos momentos distintos. El paso a "Aplicado" es una acción explícita del usuario, no automática.
 - **Recordatorios automáticos**: endpoint protegido por secreto compartido (`/cron/reminders`), disparado a diario por GitHub Actions del repositorio, que avisa por email de candidaturas activas sin movimiento.
 
 ## Setup local
@@ -72,7 +72,6 @@ Ver `.env.example` para la lista completa. Las más relevantes:
 | `RESEND_API_KEY` | Envío de emails de recordatorio |
 | `CRON_SECRET` | Autentica las llamadas al endpoint `/cron/reminders` |
 | `E2E_MOCK_GEMINI` | Si es `true` (y `NODE_ENV !== production`), sustituye la llamada real a Gemini por una respuesta enlatada — usado por los tests e2e del frontend para evitar dependencias no deterministas |
-| `ADZUNA_APP_ID` / `ADZUNA_APP_KEY` | Credenciales del buscador de ofertas (Adzuna) |
 
 ## Scripts
 

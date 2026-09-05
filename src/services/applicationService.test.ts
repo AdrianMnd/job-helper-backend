@@ -2,13 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('../lib/prisma');
 import { prisma } from '../lib/prisma';
-import { createApplication, updateApplication, deleteApplication } from './applicationService';
+import { createApplication, updateApplication, deleteApplication, DuplicateApplicationError } from './applicationService';
 
 describe('applicationService', () => {
   beforeEach(() => vi.clearAllMocks());
 
   describe('createApplication', () => {
-    it('crea la candidatura con una entrada inicial de historial en estado APPLIED', async () => {
+    it('crea la candidatura con una entrada inicial de historial en estado SAVED', async () => {
+      (prisma.application.findFirst as any).mockResolvedValue(null); // no hay duplicado
       (prisma.application.create as any).mockResolvedValue({ id: 'app1' });
 
       await createApplication('user1', {
@@ -22,11 +23,25 @@ describe('applicationService', () => {
           data: expect.objectContaining({
             userId: 'user1',
             company: 'Acme',
-            statusHistory: { create: { status: 'APPLIED' } },
+            statusHistory: { create: { status: 'SAVED' } },
           }),
         })
       );
     });
+    it('lanza DuplicateApplicationError si ya existe una candidatura con esa jobUrl', async () => {
+  (prisma.application.findFirst as any).mockResolvedValue({ id: 'existing-app' });
+
+  await expect(
+    createApplication('user1', {
+      company: 'Acme',
+      position: 'Dev',
+      jobDescription: 'oferta',
+      jobUrl: 'https://example.com/oferta',
+    })
+  ).rejects.toThrow(DuplicateApplicationError);
+
+  expect(prisma.application.create).not.toHaveBeenCalled();
+});
   });
 
   describe('updateApplication', () => {
