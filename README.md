@@ -48,6 +48,7 @@ src/
 - **Métricas del proceso**: embudo de conversión (Guardada → Aplicado → Entrevista → Oferta) y tiempo medio por fase, calculados a partir de `StatusHistory`.
 - **Estado inicial "Guardada"**: toda candidatura nace en este estado (no "Aplicado"), reflejando que crear el registro y enviar la solicitud real en la web del ofertante son dos momentos distintos. El paso a "Aplicado" es una acción explícita del usuario, no automática.
 - **Recordatorios automáticos**: endpoint protegido por secreto compartido (`/cron/reminders`), disparado a diario por GitHub Actions del repositorio, que avisa por email de candidaturas activas sin movimiento.
+- **Buscador de ofertas** integrado con la API de Adzuna (mercado España): filtros por salario, jornada, tipo de contrato, antigüedad del anuncio y una aproximación de "solo remoto" (Adzuna no tiene ese filtro nativo, se infiere por palabras clave). Traducción automática del término de búsqueda al español vía Gemini cuando hace falta. Cacheado en memoria de corta duración para no agotar el límite diario del tier gratuito. Prevención de candidaturas duplicadas: al crear una candidatura con una `jobUrl` que ya existe para ese usuario, el backend responde `409` en vez de duplicarla.
 
 ## Setup local
 
@@ -72,6 +73,7 @@ Ver `.env.example` para la lista completa. Las más relevantes:
 | `RESEND_API_KEY` | Envío de emails de recordatorio |
 | `CRON_SECRET` | Autentica las llamadas al endpoint `/cron/reminders` |
 | `E2E_MOCK_GEMINI` | Si es `true` (y `NODE_ENV !== production`), sustituye la llamada real a Gemini por una respuesta enlatada — usado por los tests e2e del frontend para evitar dependencias no deterministas |
+| `ADZUNA_APP_ID` / `ADZUNA_APP_KEY` | Credenciales del buscador de ofertas (Adzuna) |
 
 ## Scripts
 
@@ -102,6 +104,7 @@ Desplegado en **Render** (free tier):
 - [job-helper-frontend](https://github.com/AdrianMnd/job-helper-frontend) — Aplicación web (React + TypeScript)
 - [job-helper-extension](https://github.com/AdrianMnd/job-helper-extension) — Extensión de navegador para capturar ofertas
 - [job-helper-android](https://github.com/AdrianMnd/job-helper-android) — Versión Android (TWA)
+- [job-helper-mcp](https://github.com/AdrianMnd/job-helper-mcp) — Servidor MCP (herramientas para clientes de IA)
 
 ## Licencia
 
